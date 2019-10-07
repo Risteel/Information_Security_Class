@@ -9,8 +9,8 @@ class Decrypt:
         # ord(t) - ord('A') -> let the value of 't' in [0, 25]
         # + k -> shift k
         # % 26 -> let the value in [0, 25]
-        # chr(value + ord('a')) -> move value to ascii code of lowercase and convert to char
-        return ''.join([chr((ord(t) - ord('A') + k) % 26 + ord('a')) for t in text]).lower()
+        # chr(value + ord('A')) -> move value to ascii code of uppercase and convert to char
+        return ''.join([chr((ord(t) - ord('A') + k) % 26 + ord('A')) for t in text]).lower()
 
     @staticmethod
     def playfair(key, text):
