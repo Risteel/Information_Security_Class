@@ -81,7 +81,12 @@ class Decrypt:
     def vernam(key, text):
         text = text.upper()
         key = key.upper()
-        return ''.join([chr(((ord(x) - ord('A')) ^ (ord(y) - ord('A')) ) + ord('a')) for x, y in zip(text, key)]).lower()
+        r = ''
+        for k, v in enumerate(text):
+            ch = chr(((ord(v) - ord('A')) ^ (ord(key[k]) - ord('A'))) + ord('A'))
+            key += ch
+            r += ch
+        return r.lower()
 
     @staticmethod
     def row(key, text):
