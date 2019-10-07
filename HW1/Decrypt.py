@@ -9,8 +9,8 @@ class Decrypt:
         # ord(t) - ord('A') -> let the value of 't' in [0, 25]
         # + k -> shift k
         # % 26 -> let the value in [0, 25]
-        # chr(value + ord('a')) -> move value to ascii code of lowercase and convert to char
-        return ''.join([chr((ord(t) - ord('A') + k) % 26 + ord('a')) for t in text]).lower()
+        # chr(value + ord('A')) -> move value to ascii code of uppercase and convert to char
+        return ''.join([chr((ord(t) - ord('A') + k) % 26 + ord('A')) for t in text]).lower()
 
     @staticmethod
     def playfair(key, text):
@@ -81,7 +81,12 @@ class Decrypt:
     def vernam(key, text):
         text = text.upper()
         key = key.upper()
-        return ''.join([chr(((ord(x) - ord('A')) ^ (ord(y) - ord('A')) ) + ord('a')) for x, y in zip(text, key)]).lower()
+        r = ''
+        for k, v in enumerate(text):
+            ch = chr(((ord(v) - ord('A')) ^ (ord(key[k]) - ord('A'))) + ord('A'))
+            key += ch
+            r += ch
+        return r.lower()
 
     @staticmethod
     def row(key, text):
