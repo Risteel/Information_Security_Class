@@ -14,8 +14,8 @@ int main(int argc, char **argv)
 		string str;
 		ss << argv[1] << " " << argv[2];
 		ss >> std::hex >> key >> ciphertext;
-		DecryptDES DES(ciphertext, key);
-		cout << "0x" << std::hex << DES.GetCipherText();
+		DecryptDES Dectypt(ciphertext, key);
+		cout << "0x" << std::hex << Dectypt.GetPlainText();
 	}
 	return 0;
 }

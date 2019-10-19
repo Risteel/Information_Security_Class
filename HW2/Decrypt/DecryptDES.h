@@ -101,7 +101,7 @@ class DecryptDES
 public:
 	DecryptDES(U64 ciphertext, U64 key);
 	void Decrypt();
-	U64 GetCipherText() { return plaintext; };
+	U64 GetPlainText() { return plaintext; };
 	~DecryptDES() {};
 
 private:
