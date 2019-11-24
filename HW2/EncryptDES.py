@@ -96,67 +96,70 @@ def get_mask(size):
 def get_bit(num, at):
     return (num >> at) & 1
 
-def rotate(num, shift, size):
+# Circular shift
+def rotate(num, shift, size, is_decrypt):
     m = get_mask(size)
-    if shift > 0:
+    if is_decrypt:
+        a = (num & get_mask(shift)) << (size - shift)
+        b = num >> shift
+    else:
         a = num >> (size - shift)
         b = num << shift
-    else:
-        a = (num & ((1 << -shift) - 1)) << (size + shift)
-        b = num >> -shift
     return (a | b) & m
 
+# Block cipher
 def mapping(num, table, ori):
     v = 0
     for i in table:
         v = (v << 1) | get_bit(num, ori - i)
     return v
 
+# Key schedule
 def generate_key(key, is_decrypt=False):
-    rotate_c = [1, 1, 2, 2, 2, 2, 2, 2, 1, 2, 2, 2, 2, 2, 2, 1]
+    # convert shift count into numbers
+    rotate_c = 0x6aa9aaa5
     if is_decrypt:
-        rotate_c = [0, -1, -2, -2, -2, -2, -2, -2, -1, -2, -2, -2, -2, -2, -2, -1]
+        rotate_c ^= 1
     new_key = mapping(key, PC_1, 64)
     m = get_mask(28)
+    #split new_key 56 -> 28, 28
     C = (new_key >> 28) & m
     D = new_key & m
-    for i in rotate_c:
-        C = rotate(C, i, 28)
-        D = rotate(D, i, 28)
+    for i in range(16):
+        C = rotate(C, rotate_c & 3, 28, is_decrypt)
+        D = rotate(D, rotate_c & 3, 28, is_decrypt)
+        rotate_c >>= 2
         yield mapping((C << 28) | D, PC_2, 56)
 
+# F function
 def f(R, K):
+    # Expansion Function
     new_r = mapping(R, E, 32) ^ K
     m = get_mask(6)
     r = 0
     for i in range(8):
+        # get 6 bits
         v = (new_r >> ((7 - i) * 6)) & m
+        # get column
         x = (get_bit(v, 5) << 1) | get_bit(v, 0)
+        # get row
         y = (v >> 1) & 15
         r = (r << 4) | S[i][x][y]
     return mapping(r, P, 32)
 
-def encrypt(num, key):
+def DES(num, key, is_decrypt=False):
     new_num = mapping(num, IP, 64)
     m = get_mask(32)
+    # split new_num 64 -> 32, 32
     L = (new_num >> 32) & m
     R = new_num & m
-    for k in generate_key(key):
+    for k in generate_key(key, is_decrypt):
         R, L = f(R, k) ^ L, R
     new_num = mapping((R << 32) | L, FP, 64)
     return new_num
 
-def decrypt(num, key):
-    new_num = mapping(num, IP, 64)
-    m = get_mask(32)
-    L = (new_num >> 32) & m
-    R = new_num & m
-    for k in generate_key(key, is_decrypt=True):
-        R, L = f(R, k) ^ L, R
-    new_num = mapping((R << 32) | L, FP, 64)
-    return new_num
 
 key = int(sys.argv[1], 16)
 txt = int(sys.argv[2], 16)
-v = encrypt(txt, key)
+v = DES(txt, key, is_decrypt=False)
 sys.stdout.write("0x%.16X" % v)
