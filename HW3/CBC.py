@@ -52,8 +52,8 @@ def decrypt(ppmPicture,iv):
         block = body[i * 16 : (i+1) * 16]
         temp = block
         block = aes.decrypt(block)
-        body[i * 16 : (i+1) * 16] = bytearray(a ^ b for (a,b) in zip(block,tempIv))
-        tempIv = temp
+        body[i * 16 : (i+1) * 16] = bytearray(a ^ b for (a,b) in zip(block,iv))
+        iv = temp
     body = unpad(body)
     img = head + body
     newFile = open("decrypt.ppm","wb")
