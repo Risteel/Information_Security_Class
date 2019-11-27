@@ -16,7 +16,7 @@ def ReadPPM(fileName):
         f = image.readlines()
     return f
 
-def encrypt(ppmPicture):
+def encrypt(ppmPicture,iv):
     f = ReadPPM(ppmPicture)
     # get image head and body    
     head = b''.join(f[0:3])
@@ -41,7 +41,7 @@ def encrypt(ppmPicture):
     im = Image.open(ppmPicture)
     im.save("encrypt.jpg")
 
-def decrypt(ppmPicture):
+def decrypt(ppmPicture,iv):
     f = ReadPPM(ppmPicture)      
     head = b''.join(f[0:3])
     body = bytearray(b''.join(f[3:]))
@@ -78,10 +78,10 @@ if __name__ == '__main__':
             im = Image.open('tux.jpg')
             ppmPicture = ("origin.ppm")
             im.save(ppmPicture)
-            encrypt(ppmPicture)
+            encrypt(ppmPicture,iv)
         else:
             ppmPicture = ("encrypt.ppm")
-            decrypt(ppmPicture)
+            decrypt(ppmPicture,iv)
     except Exception as error:
         print(error)
 
