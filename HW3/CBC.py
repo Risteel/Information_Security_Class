@@ -46,7 +46,6 @@ def decrypt(ppmPicture,iv):
     head = b''.join(f[0:3])
     body = bytearray(b''.join(f[3:]))
     blockSize = int(len(body) / 16)
-    tempIv = iv
     #decrypt CBC block  
     for i in range(blockSize):
         block = body[i * 16 : (i+1) * 16]
