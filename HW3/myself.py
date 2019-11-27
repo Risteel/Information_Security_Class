@@ -4,12 +4,10 @@ import os
 
 def pad(text):
     padding = 16 - (len(text) % 16)
-    print(padding)
     return text + bytes([padding] * padding)
     
 def unpad(text):
     padding = text[-1]
-    print(padding)
     for char in text[-padding:]:
         assert char == padding
     return text[:-padding]
@@ -19,28 +17,30 @@ def ReadPPM(fileName):
     return f
 
 def encrypt(ppmPicture,iv):
+    #key2
+    key2 = b'0000000000000000'
+    #read ppm
     f = ReadPPM(ppmPicture)
     # get image head and body    
     head = b''.join(f[0:3])
     body = bytearray(b''.join(f[3:]))
     #padding body
     body = pad(body)
+    tempBody = body
     #calc block size
     blockSize = int(len(body) / 16)
-    #encrypt CBC block
-    temp = iv
+    #encrypt myself block
     iv = bytearray(iv)  
     for i in range(blockSize):
-        block = body[i * 16 : (i+1) * 16]
-        key = aes.encrypt(temp)
-        body[i * 16 : (i+1) * 16] = bytearray(a ^ b for (a,b) in zip(block,key))
-        #Next IV is now cipher block
-        t = iv[-1]
-        #1 = 0
-        for i in range(15):
-            iv[15 - i] = iv[14 - i]
-        iv[0] = t
-        temp = bytearray(a ^ b for (a,b) in zip(temp,iv))
+        plaintext = body[i * 16 : (i+1) * 16]
+        block = bytearray(a ^ b for (a,b) in zip(plaintext,iv))
+        body[i * 16 : (i+1) * 16] = aes.encrypt(block)
+        #next iv is encrypt block
+        iv = body[i * 16 : (i+1) * 16]
+        #block xor key2 after encrypt block
+        body[i * 16 : (i+1) * 16] = bytearray(a ^ b for (a,b) in zip(body[i * 16 : (i+1) * 16],key2))
+        #next key2 is previous plaintext
+        key2 = plaintext
     #merge head and body
     img = head + body
     newFile = open("encrypt.ppm","wb")
@@ -51,29 +51,31 @@ def encrypt(ppmPicture,iv):
     im.save("encrypt.jpg")
 
 def decrypt(ppmPicture,iv):
-    f = ReadPPM(ppmPicture)      
+    #key2
+    key2 = b'0000000000000000'
+    #read ppm
+    f = ReadPPM(ppmPicture)   
+    # get image head and body       
     head = b''.join(f[0:3])
     body = bytearray(b''.join(f[3:]))
+    #calc block size
     blockSize = int(len(body) / 16)
-    temp = iv
+    #decrypt myself block
     iv = bytearray(iv)
-
-    #decrypt CBC block  
     for i in range(blockSize):
-        block = body[i * 16 : (i+1) * 16]
-        key = aes.encrypt(temp)
-        body[i * 16 : (i+1) * 16] = bytearray(a ^ b for (a,b) in zip(block,key))
-        #Next IV is now cipher block
-        t = iv[-1]
-        #1 = 0
-        for i in range(15):
-            iv[15 - i] = iv[14 - i]
-        iv[0] = t
-        temp = bytearray(a ^ b for (a,b) in zip(temp,iv))
-    body = unpad(body)
+        ciphertext = body[i * 16 : (i+1) * 16]
+        block = bytearray(a ^ b for (a,b) in zip(ciphertext,key2))
+        body[i * 16 : (i+1) * 16] = aes.decrypt(block)
+        body[i * 16 : (i+1) * 16] = bytearray(a ^ b for (a,b) in zip(body[i * 16 : (i+1) * 16],iv))
+        key2 = body[i * 16 : (i+1) * 16]
+        iv = block
+
+
     img = head + body
     newFile = open("decrypt.ppm","wb")
     newFile.write(img)
+    body = unpad(body)
+    img = head + body
     ppmPicture = ("decrypt.ppm")
     im = Image.open(ppmPicture)
     im.save("decrypt.jpg")
