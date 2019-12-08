@@ -174,7 +174,7 @@ def main():
             else:
                 a.importKey()
             ciphertext = a.encrypt(plain)
-            with open('Cipertext.txt', 'w') as f:
+            with open('Ciphertext.txt', 'w') as f:
                 f.write(ciphertext)
             print('ciphertext: ', ciphertext)
             print('state: ', a.__dict__)
@@ -182,9 +182,9 @@ def main():
             mode = sys.argv[2]
             if mode == 'file':
                 with open(sys.argv[3], encoding='utf-8') as file:
-                    ciper = file.read()
+                    cipher = file.read()
             elif mode == 'text':
-                ciper = sys.argv[3]
+                cipher = sys.argv[3]
             else:
                 print('not support option: %s' % mode)
                 return
@@ -192,7 +192,7 @@ def main():
                 a.importKey(sys.argv[4])
             else:
                 a.importKey()
-            plaintext = a.decrypt(ciper)
+            plaintext = a.decrypt(cipher)
             with open('Plaintext.txt', 'w') as f:
                 f.write(plaintext)
             print('plaintext: ', plaintext)
