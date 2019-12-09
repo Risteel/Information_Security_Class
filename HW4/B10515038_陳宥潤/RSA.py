@@ -132,7 +132,6 @@ def Encrypt(text,N,e):
         t = t.to_bytes(size,byteorder = 'big')
         cipher += t
     return base64.b64encode(cipher).decode()
-    print('Cipher Text: {}'.format(base64.b64encode(cipher).decode()))
 
 def CRT_decrypt(p,q,d,ciphertext):
     dp = d % (p - 1)
