@@ -155,12 +155,10 @@ def Decrypt(text,N,d, p = 0 , q = 0):
     #count how many bytes of plain text
     size = (bits >> 3)
     plain = b''
+    CRT = bool(p!=0 and q!=0)
     for i in range(0,byteLen,byte):
         t = int.from_bytes(cipher[i:i + byte], byteorder = 'big')
-        if p != 0 and q != 0:
-            t = CRT_decrypt(p,q,d,t)
-        else:
-            t = pow_mod(t,d,N)
+        t = (CRT and CRT_decrypt(p,q,d,t)) or pow_mod(t,d,N)
         t = t.to_bytes(size,byteorder = 'big')
         plain += t
     return unpad(plain).decode()
