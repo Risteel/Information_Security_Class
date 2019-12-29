@@ -24,7 +24,7 @@ def mul_inv(a, b):
         old_t, y = y, old_y - q * y
     if old_x < 0:
         old_x = old_x + b
-    return old_r == 1, old_x
+    return old_x
 
 def powmod(a, b, c):
     v = 1
@@ -75,7 +75,11 @@ def generate_keys(bits):
     while flag1:
         flag2 = True
         max_count = 50
-        q = secrets.randbits(bits) | (1 << bits - 1) | 1
+        while flag2:
+            q = secrets.randbits(bits) | (1 << bits - 1) | 1
+            if MillerRabinTest(q):
+                flag2 = False
+        flag2 = True
         k_min = _ceil(p_min, q)
         k_max = (p_max // q) + 1
         while flag2:
@@ -101,21 +105,11 @@ def sign(x, keys):
     q = keys.q
     a = keys.a
     d = keys.d
-    succ = False
-    m = 1000
-    while not succ:
-        if m <= 0:
-            raise Exception('1000 times faild')
-        m -= 1
-        ke = randint(1, q)
-        succ, ke_inv = mul_inv(ke, q)
-        #print("check ke_inv", succ, ke, ke_inv, m)
-        if succ:
-            r = powmod(a, ke, p) % q
-            h = int.from_bytes(sha1(x.encode('utf-8')).digest(), 'big')
-            s = ((h + d * r) * ke_inv) % q
-            #print("check s_inv", succ, ke, ke_inv, m)
-            succ, s_inv = mul_inv(s, q)
+    ke = randint(1, q)
+    ke_inv = mul_inv(ke, q)
+    r = powmod(a, ke, p) % q
+    h = int.from_bytes(sha1(x.encode('utf-8')).digest(), 'big')
+    s = ((h + d * r) * ke_inv) % q
     return r, s
 
 def valid(x, r, s, keys):
@@ -130,8 +124,39 @@ def valid(x, r, s, keys):
     a = keys.a
     b = keys.b
     h = int.from_bytes(sha1(x.encode('utf-8')).digest(), 'big')
-    _, w = mul_inv(s, q)
+    w = mul_inv(s, q)
     u1 = (w * h) % q
     u2 = (w * r) % q
     v = (powmod(a, u1, p) * powmod(b, u2, p)) % p % q
     return v == r
+if __name__ == "__main__":
+    assert(len(sys.argv) >= 2)
+    try:
+        if sys.argv[1] == '-keygen':
+            if len(sys.argv) != 3 : raise Exception("Error arguments, verify command is {DSA.py -keygen bits}")
+            if sys.argv[2].isnumeric() is False: raise Exception("Error arguments, bits must is numeric.")
+            bits = int(sys.argv[2])
+            key = generate_keys(bits)
+            with open('key', 'wb') as file:
+                pickle.dump(key.__dict__, file)
+        elif sys.argv[1] == '-sign':
+            if len(sys.argv) != 3 : raise Exception("Error arguments, verify command is {DSA.py -sign message}")
+            key = struct(p = 0,q = 0,a = 0,b = 0,d = 0)
+            with open('key', 'rb') as file:
+                key.__dict__.update(pickle.load(file))
+            message = sys.argv[2]
+            r, s = sign(message,key)
+            print("r = {}\ns = {}".format(r,s))
+        elif sys.argv[1] == '-verify':
+            if len(sys.argv) != 5 : raise Exception("Error arguments, verify command is {DSA.py -verify message r s}")
+            if (sys.argv[3].isnumeric() and sys.argv[4].isnumeric()) is False: raise Exception("Error arguments, r and s must are numeric.")
+            key = struct(p = 0,q = 0,a = 0,b = 0,d = 0)
+            with open('key', 'rb') as file:
+                key.__dict__.update(pickle.load(file))
+            r, s = int(sys.argv[3]), int(sys.argv[4])
+            message = sys.argv[2]
+            IsValid = valid(message,r,s,key)
+            print((IsValid and "valid") or "invalid")
+        else : raise Exception("Error command, command contain {DSA.py [-keygen\-sign\-verify]}")
+    except Exception as error:
+        print(error)
